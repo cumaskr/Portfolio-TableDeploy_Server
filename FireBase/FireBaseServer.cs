@@ -27,9 +27,9 @@ namespace APIServer
         public FireBaseServer(ILogger logger)
         {
             //로그 셋팅
-            Logger = logger;            
+            Logger = logger;
             //파이어베이스 리스너 등록
-            string path = $"./{AdminSdkJson}";
+            string path = $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\{AdminSdkJson}";
             if (File.Exists(path)) 
             {
                 logger.LogInformation("[FireBase] Start Setting");
