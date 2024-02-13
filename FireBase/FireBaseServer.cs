@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Collections;
+using System.Runtime.InteropServices;
 
 namespace APIServer
 {
@@ -28,11 +29,21 @@ namespace APIServer
         {
             //로그 셋팅
             Logger = logger;
-            //로그 - Path 경로
-            logger.LogInformation($"[FireBase Path] {Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}");
+
+            var path = "";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                logger.LogInformation("[FireBase] OS:Winndows");
+                path = $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\{AdminSdkJson}";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                logger.LogInformation("[FireBase] OS:Linux");
+                path = $"./../../../{AdminSdkJson}";
+            }
+
             //파이어베이스 리스너 등록
-            string path = $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\{AdminSdkJson}";
-            if (File.Exists(path)) 
+            if (false == string.IsNullOrEmpty(path) && File.Exists(path)) 
             {
                 logger.LogInformation("[FireBase] Start Setting");
 
