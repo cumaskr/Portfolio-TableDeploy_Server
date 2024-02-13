@@ -10,4 +10,10 @@
     <PackageReference Include="Google.Cloud.Firestore" Version="3.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="wwwroot\index.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
