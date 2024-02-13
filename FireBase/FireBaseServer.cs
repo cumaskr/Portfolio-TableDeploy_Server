@@ -28,6 +28,8 @@ namespace APIServer
         {
             //로그 셋팅
             Logger = logger;
+            //로그 - Path 경로
+            logger.LogInformation($"[FireBase Path] {Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}");
             //파이어베이스 리스너 등록
             string path = $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\{AdminSdkJson}";
             if (File.Exists(path)) 
