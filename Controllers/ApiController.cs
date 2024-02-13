@@ -6,16 +6,24 @@ namespace APIServer
     [ApiController]
     public class ApiController : ControllerBase
     {
-        [HttpGet]
-        public ActionResult<string> GetJson(string jsonName)
+        private readonly ILogger logger;
+
+        public ApiController(ILogger<ApiController> lg) 
         {
-            return Ok($"GetJson/{jsonName}");
+            logger = lg;
         }
 
         [HttpGet]
         public ActionResult<string> Test()
         {
+            logger.LogInformation("|API|Test");
             return Ok("Test");
+        }
+
+        [HttpGet]
+        public ActionResult<string> GetJson(string jsonName)
+        {
+            return Ok($"GetJson/{jsonName}");
         }
     }
 }
