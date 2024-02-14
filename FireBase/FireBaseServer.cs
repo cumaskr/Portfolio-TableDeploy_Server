@@ -30,6 +30,8 @@ namespace APIServer
             //로그 셋팅
             Logger = logger;
 
+            logger.LogInformation("[FireBase] Start Setting");
+
             var path = "";
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -41,14 +43,19 @@ namespace APIServer
                 logger.LogInformation("[FireBase] OS:Linux");
                 path = $"./../../../{AdminSdkJson}";
             }
+            else
+            {
+                logger.LogInformation("[FireBase] UnKnown OS");
+            }
 
             //파이어베이스 리스너 등록
             if (false == string.IsNullOrEmpty(path) && File.Exists(path)) 
             {
-                logger.LogInformation("[FireBase] Start Setting");
-
                 Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", path);
                 Db = FirestoreDb.Create(ProjectId);
+
+                logger.LogInformation("[FireBase] Registe Listner");
+
                 Listner = Db.Collection(Server).Document(DocumentName).Listen(snapshot =>
                 {
                     var dic = snapshot.ToDictionary();
@@ -56,7 +63,7 @@ namespace APIServer
                     logger.LogInformation($"[FireBase] Call Back - {str}");
                 });
 
-                logger.LogInformation("[FireBase] Register Listner Done");
+                logger.LogInformation("[FireBase] Done Setting");
             }
             else
             {
