@@ -13,10 +13,12 @@ namespace APIServer
     public class FireBaseServer
     {
         //저장소 접근하기위한 Json파일명(해당 파일은 깃에 올라가지 않음, 특정 컴퓨터 내부에서 관리)
-        private string AdminSdkJson = "tablebuild-e6f20-firebase-adminsdk-xx0ap-d795853497.json";
+        private string AdminSdkJson = "FireBase.json";
         private string ProjectId = "tablebuild-e6f20";
         private string Server = "Local";
         private string DocumentName = "Table";
+        //테이블 최신버전 담을 컨테이너
+        private Dictionary<string, int>? TableRecentVersions;
 
         //저장소 객체
         public FirestoreDb? Db { get; private set; }
@@ -29,45 +31,61 @@ namespace APIServer
         {
             //로그 셋팅
             Logger = logger;
-
+            //로그
             logger.LogInformation("[FireBase] Start Setting");
-
-            var path = "";
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 logger.LogInformation("[FireBase] OS:Winndows");
-                path = $"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}\\{AdminSdkJson}";
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 logger.LogInformation("[FireBase] OS:Linux");
-                path = $"./../../../{AdminSdkJson}";
             }
             else
             {
                 logger.LogInformation("[FireBase] UnKnown OS");
             }
-
-            //파이어베이스 리스너 등록
-            if (false == string.IsNullOrEmpty(path) && File.Exists(path)) 
+            //인증정보 경로
+            var path = $"./{AdminSdkJson}";
+            try
             {
                 Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", path);
                 Db = FirestoreDb.Create(ProjectId);
 
                 logger.LogInformation("[FireBase] Registe Listner");
 
+                TableRecentVersions = new Dictionary<string, int>();
+
+                //파이어베이스 리스너 등록
                 Listner = Db.Collection(Server).Document(DocumentName).Listen(snapshot =>
                 {
-                    var dic = snapshot.ToDictionary();
-                    var str = JsonConvert.SerializeObject(dic);
-                    logger.LogInformation($"[FireBase] Call Back - {str}");
-                });
+                    var resVersions = snapshot.ToDictionary();
+                    foreach (var item in resVersions) 
+                    {
+                        var resVersion = Convert.ToInt32(item.Value);
+                        if (TableRecentVersions.TryGetValue(item.Key, out var nowVersion))
+                        {
+                            if (nowVersion >= resVersion)
+                            {
+                                continue;
+                            }
 
-                logger.LogInformation("[FireBase] Done Setting");
+                            TableRecentVersions[item.Key] = resVersion;
+                        }
+                        else
+                        {
+                            TableRecentVersions.Add(item.Key, resVersion);
+                        }
+
+                        logger.LogInformation($"[FireBase] Table Change - {item.Key} {resVersion}");
+
+                        //TODO AWS에서 파일 받아온다.
+                    }
+                });
             }
-            else
+            catch (Exception e)
             {
-                logger.LogInformation("[FireBase] Fail Setting");
+                logger.LogInformation(e, "[FireBase] Fail Setting");
             }
         }
     }
