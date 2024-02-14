@@ -10,7 +10,7 @@ var loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddFilter("System", LogLevel.Trace).AddConsole();
 });
-var fs = new FireBaseServer(loggerFactory.CreateLogger<FireBaseServer>());
+var fs = new FireBase(loggerFactory.CreateLogger<FireBase>());
 builder.Services.AddSingleton(fs);
 
 //서버 빌드(셋팅)
