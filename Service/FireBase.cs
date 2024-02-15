@@ -17,9 +17,11 @@ namespace APIServer
         private string ProjectId = "tablebuild-e6f20";
         private string Server = "Local";
         private string DocumentName = "Table";
-        //테이블별 최신버전 담을 컨테이너
-        private Dictionary<string, int>? TableRecentVersions;
 
+        //테이블 데이터(최종 변환된 테이블을 담는 클래스)
+        public DataClient DataClient;
+        //테이블별 최신버전 담을 컨테이너
+        private Dictionary<string, int>? TableRecentVersions;        
         //저장소 객체
         public FirestoreDb? Db { get; private set; }
         //저장소 리스너
@@ -45,7 +47,10 @@ namespace APIServer
             {
                 logger.LogInformation("[FireBase] UnKnown OS");
             }
-            //인증정보 경로
+
+            //------------------------------------------------------------1.DataClient 생성
+            DataClient = new DataClient(logger);
+            //------------------------------------------------------------2.FireBase 인증정보 셋팅
             var path = $"./{AdminSdkJson}";
             try
             {
@@ -56,11 +61,12 @@ namespace APIServer
 
                 TableRecentVersions = new Dictionary<string, int>();
 
-                //FireBase 콜백 등록(서버 로드 시, 한번 무조건 호출됨 혹은 변경 시마다)
+                //------------------------------------------------------------3.콜백 등록(서버 로드 시, 한번 무조건 호출됨 혹은 저장소 변경 시)
                 Listner = Db.Collection(Server).Document(DocumentName).Listen(snapshot =>
                 {
-                    //AWS S3에서 파일받을 준비
-                    var aws = new AWSS3();
+                    //------------------------------------------------------------4.AWS S3 생성
+                    var aws = new AWSS3(logger);
+                    //------------------------------------------------------------5.전달받은 버전파일로 S3로부터 Json파일을 받는다.
                     //테이블 별, 최신버전 목록
                     var resVersions = snapshot.ToDictionary();
                     //테이블 순회
@@ -86,7 +92,16 @@ namespace APIServer
                         logger.LogInformation($"[FireBase] Table Change - {item.Key} {resVersion}");
 
                         //AWS S3에서 테이블 파일 받기
-                        aws.DownloadTableFile(item.Key, resVersion);
+                        var json = aws.DownloadTable(item.Key, resVersion);
+                        if (false == string.IsNullOrEmpty(json)) 
+                        {
+                            //DataClient에 사용할 데이터 형태로 변환
+                            DataClient.ConvertByReflection(item.Key, json);
+                        }
+                        else
+                        {
+                            logger.LogInformation($"[AWS] Fail Download File - {item.Key} {resVersion}");
+                        }
                     }
                     //리소스 해제
                     aws.Dispose();

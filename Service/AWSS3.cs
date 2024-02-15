@@ -19,11 +19,15 @@ namespace APIServer
 
         private const string bucketName = "asia-table";
 
-        public AWSS3()
+        private ILogger logger;
+
+        public AWSS3(ILogger lg)
         {
+            logger = lg;
+
             try
             {
-                Console.WriteLine("[AWS] Start Setting");
+                logger.LogInformation("[AWS] Start Setting");
 
                 //환경변수 불러오기
                 DotEnv.Load();
@@ -38,30 +42,39 @@ namespace APIServer
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                logger.LogInformation($"{e.Message}");
                 Client = null;
                 return;
             }
         }
 
         //S3로부터 특정테이블의 특정버전 파일을 받는다.
-        public void DownloadTableFile(string folderName, int version)
+        public string DownloadTable(string folderName, int version)
         {
-            if (null != Client)
+            var str = string.Empty;
+            try
             {
-                var req = new GetObjectRequest()
+                if (null != Client)
                 {
-                    BucketName = bucketName,
-                    Key = $"{folderName}/{version}.{Const.FileExtension.Json}",
-                };
-                var resObj = Client.GetObjectAsync(req).GetAwaiter().GetResult();
-
-                using (StreamReader reader = new StreamReader(resObj.ResponseStream))
-                {
-                    string content = reader.ReadToEnd();
-                    Console.WriteLine(content);
+                    var req = new GetObjectRequest()
+                    {
+                        BucketName = bucketName,
+                        Key = $"{folderName}/{version}.{Const.FileExtension.Json}",
+                    };
+                    var resObj = Client.GetObjectAsync(req).GetAwaiter().GetResult();
+                    using (var reader = new StreamReader(resObj.ResponseStream))
+                    {
+                        str = reader.ReadToEnd();
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                logger.LogError(e.Message);
+                str = string.Empty;
+            }
+
+            return str;
         }
 
         //리소스 정리
