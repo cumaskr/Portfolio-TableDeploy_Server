@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Text.Json.Nodes;
 
 namespace APIServer
 {
@@ -7,10 +9,12 @@ namespace APIServer
     public class ApiController : ControllerBase
     {
         private readonly ILogger logger;
+        private readonly FireBase fireBase;
 
-        public ApiController(ILogger<ApiController> lg) 
+        public ApiController(ILogger<ApiController> lg, FireBase fb) 
         {
             logger = lg;
+            fireBase = fb;
         }
 
         [HttpGet]
@@ -21,9 +25,21 @@ namespace APIServer
         }
 
         [HttpGet]
-        public ActionResult<string> GetJson(string jsonName)
+        public ActionResult<string> GetTable(string tableName)
         {
-            return Ok($"GetJson/{jsonName}");
+            if (tableName == "Character")
+            {
+                if (null != fireBase.DataClient.Characters)
+                {
+                    return Ok($"{JsonConvert.SerializeObject(fireBase.DataClient.Characters)}");
+                }
+            }
+            else if (tableName == "Dungeon") 
+            {
+                return Ok($"{JsonConvert.SerializeObject(fireBase.DataClient.Dungeons)}");
+            }
+
+            return Ok();
         }
     }
 }

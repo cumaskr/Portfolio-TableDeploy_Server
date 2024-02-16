@@ -21,7 +21,7 @@ namespace APIServer
         //테이블 데이터(최종 변환된 테이블을 담는 클래스)
         public DataClient DataClient;
         //테이블별 최신버전 담을 컨테이너
-        private Dictionary<string, int>? TableRecentVersions;        
+        private Dictionary<string, int>? TableRecentVersions;
         //저장소 객체
         public FirestoreDb? Db { get; private set; }
         //저장소 리스너

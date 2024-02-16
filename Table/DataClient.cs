@@ -11,12 +11,14 @@ namespace APIServer
         {
             public int ID { get; set; }
             public int HP { get; set; }
+            public int MP { get; set; }
         }
 
-        public class Monster
+        public class Dungeon
         {
             public int ID { get; set; }
-            public int HP { get; set; }
+            public int MapIndex { get; set; }
+            public int Difficulty { get; set; }
         }
     }
 
@@ -25,7 +27,7 @@ namespace APIServer
     {
         //-----------------------------------------------------테이블 데이터
         //※주의 사항 : 꼭 프로퍼티명을 {클래스명}s 형태로 추가 할것![whjeon 24.02.15]
-        public Monster[]? Monsters { get; set; }
+        public Dungeon[]? Dungeons { get; set; }
         public Character[]? Characters { get; set; }
         //-----------------------------------------------------
 
@@ -40,7 +42,7 @@ namespace APIServer
         public void ErrorTables(string errorMsg) 
         {
             logger.LogError($"[DataClient] {errorMsg}");
-            Monsters = null;
+            Dungeons = null;
             Characters = null;
         }
 
