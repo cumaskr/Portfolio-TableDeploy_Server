@@ -18,6 +18,9 @@ namespace APIServer
         private string Server = "Local";
         private string DocumentName = "Table";
 
+        //테이블 변경 로직 동기처리 오브젝트
+        private object LockTableChange = new object();
+
         //테이블 데이터(최종 변환된 테이블을 담는 클래스)
         public DataClient DataClient;
         //테이블별 최신버전 담을 컨테이너
@@ -62,49 +65,65 @@ namespace APIServer
                 TableRecentVersions = new Dictionary<string, int>();
 
                 //------------------------------------------------------------3.콜백 등록(서버 로드 시, 한번 무조건 호출됨 혹은 저장소 변경 시)
-                Listner = Db.Collection(Server).Document(DocumentName).Listen(snapshot =>
+                //테이블 다운로드가 오래걸릴 경우, 동시에 다른 버전 요청 받아놓기위해 비동기로 변경
+                Listner = Db.Collection(Server).Document(DocumentName).Listen(async snapshot =>
                 {
                     //------------------------------------------------------------4.AWS S3 생성
                     var aws = new AWSS3(logger);
-                    //------------------------------------------------------------5.전달받은 버전파일로 S3로부터 Json파일을 받는다.
-                    //테이블 별, 최신버전 목록
-                    var resVersions = snapshot.ToDictionary();
-                    //테이블 순회
-                    foreach (var item in resVersions) 
+                    try
                     {
-                        //전달받은 버전
-                        var resVersion = Convert.ToInt32(item.Value);
-                        //컨테이너에 관리하는 버전과 비교하여, 받은 버전이 높다면 AWS 다운로드 로직으로 넘어간다.
-                        if (TableRecentVersions.TryGetValue(item.Key, out var nowVersion))
+                        lock (LockTableChange)
                         {
-                            if (nowVersion >= resVersion)
+                            //------------------------------------------------------------5.전달받은 버전파일로 S3로부터 Json파일을 받는다.
+                            //테이블 별, 최신버전 목록
+                            var resVersions = snapshot.ToDictionary();
+                            //테이블 순회
+                            foreach (var item in resVersions)
                             {
-                                continue;
+                                //전달받은 버전
+                                var resVersion = Convert.ToInt32(item.Value);
+                                //컨테이너에 관리하는 버전과 비교하여, 받은 버전이 높다면 AWS 다운로드 로직으로 넘어간다.
+                                if (TableRecentVersions.TryGetValue(item.Key, out var nowVersion))
+                                {
+                                    if (nowVersion >= resVersion)
+                                    {
+                                        continue;
+                                    }
+
+                                    TableRecentVersions[item.Key] = resVersion;
+                                }
+                                else
+                                {
+                                    TableRecentVersions.Add(item.Key, resVersion);
+                                }
+
+                                logger.LogInformation($"[FireBase] Table Change - {item.Key} {resVersion}");
+
+                                //AWS S3에서 테이블 파일 받기
+                                var json = aws.DownloadTable(item.Key, resVersion);
+                                if (false == string.IsNullOrEmpty(json))
+                                {
+                                    //DataClient에 사용할 데이터 형태로 변환
+                                    DataClient.ConvertByReflection(item.Key, json);
+                                }
+                                else
+                                {
+                                    logger.LogInformation($"[AWS] Fail Download File - {item.Key} {resVersion}");
+                                }
                             }
-
-                            TableRecentVersions[item.Key] = resVersion;
-                        }
-                        else
-                        {
-                            TableRecentVersions.Add(item.Key, resVersion);
-                        }
-
-                        logger.LogInformation($"[FireBase] Table Change - {item.Key} {resVersion}");
-
-                        //AWS S3에서 테이블 파일 받기
-                        var json = aws.DownloadTable(item.Key, resVersion);
-                        if (false == string.IsNullOrEmpty(json)) 
-                        {
-                            //DataClient에 사용할 데이터 형태로 변환
-                            DataClient.ConvertByReflection(item.Key, json);
-                        }
-                        else
-                        {
-                            logger.LogInformation($"[AWS] Fail Download File - {item.Key} {resVersion}");
+                            //리소스 해제
+                            aws.Dispose();
                         }
                     }
-                    //리소스 해제
-                    aws.Dispose();
+                    catch (Exception e)
+                    {
+                        logger.LogInformation(e, "[FireBase] Table Change Error");
+                    }
+                    finally 
+                    {
+                        if (null != aws)
+                            aws.Dispose();
+                    }
                 });
             }
             catch (Exception e)
