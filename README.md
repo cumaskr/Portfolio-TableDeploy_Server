@@ -10,4 +10,6 @@
 
 ## 특이사항 및 작업로그
 기본 작업완료[24.02.16]  
-서버를 Linux Service로 실행 해보기[24.03.06]
+서버를 Linux Service로 실행 해보기[24.03.06]  
+젠킨스를 사용하여 서버 패치 자동화 추가(아주 간단하게)[24.03.07]  
+https://github.com/cumaskr/Portfolio-TableDeploy_ShellScript  
