@@ -20,26 +20,14 @@ namespace APIServer
         [HttpGet]
         public ActionResult<string> Test()
         {
-            logger.LogInformation("|API|Test");
+            logger.LogInformation("|API|Test Patch Server");
             return Ok("Test");
         }
 
         [HttpGet]
-        public ActionResult<string> GetTable(string tableName)
+        public ActionResult<string> CharacterTable()
         {
-            if (tableName == "Character")
-            {
-                if (null != fireBase.DataClient.Characters)
-                {
-                    return Ok($"{JsonConvert.SerializeObject(fireBase.DataClient.Characters)}");
-                }
-            }
-            else if (tableName == "Dungeon") 
-            {
-                return Ok($"{JsonConvert.SerializeObject(fireBase.DataClient.Dungeons)}");
-            }
-
-            return Ok();
+            return Ok($"{JsonConvert.SerializeObject(fireBase.DataClient.Characters)}");
         }
     }
 }
