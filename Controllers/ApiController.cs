@@ -20,8 +20,9 @@ namespace APIServer
         [HttpGet]
         public ActionResult<string> Test()
         {
-            logger.LogInformation("|API|Test Patch Server");
-            return Ok("Test");
+            string tmpStr = "|API|Test Patch Server 2";
+            logger.LogInformation(tmpStr);
+            return Ok(tmpStr);
         }
 
         [HttpGet]
