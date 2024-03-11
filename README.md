@@ -2,7 +2,7 @@
 배포된 테이블(Excel)의 변경, 알림, 조회를 할수있는 ASP.Net Core 서버입니다.
 
 ## 주요 스크립트 경로
->테이블 컨테이너 : Table/DataCLient.cs
+>테이블 컨테이너 : Table/DataClient.cs
 
 >외부저장소 : Service/*.cs
 
