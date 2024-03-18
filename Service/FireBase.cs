@@ -51,8 +51,9 @@ namespace APIServer
                 logger.LogInformation("[FireBase] UnKnown OS");
             }
 
-            //------------------------------------------------------------1.DataClient 생성
-            DataClient = new DataClient(logger);
+            //------------------------------------------------------------1.DataClient 초기화
+            DataClient = DataClient.GetInstance();
+            DataClient.SetLogger(Logger);
             //------------------------------------------------------------2.FireBase 인증정보 셋팅
             var path = $"./{AdminSdkJson}";
             try

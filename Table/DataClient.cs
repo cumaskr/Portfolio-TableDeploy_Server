@@ -25,6 +25,18 @@ namespace APIServer
     //테이블 관리 클래스 - 서버에서 테이블을 사용하는 로직들은 이 DataClient를 통하여 사용
     public class DataClient
     {
+        private static DataClient Instance;
+        private DataClient() { }
+
+        public static DataClient GetInstance()
+        {
+            if (null == Instance)
+            {
+                Instance = new DataClient();
+            }
+            return Instance;
+        }
+
         //-----------------------------------------------------테이블 데이터
         //※주의 사항 : 꼭 프로퍼티명을 {클래스명}s 형태로 추가 할것![whjeon 24.02.15]
         public Dungeon[]? Dungeons { get; set; }
@@ -33,7 +45,7 @@ namespace APIServer
 
         private ILogger logger;
 
-        public DataClient(ILogger lg) 
+        public void SetLogger(ILogger lg) 
         {
             logger = lg;
         }

@@ -9,12 +9,10 @@ namespace APIServer
     public class ApiController : ControllerBase
     {
         private readonly ILogger logger;
-        private readonly FireBase fireBase;
 
-        public ApiController(ILogger<ApiController> lg, FireBase fb) 
+        public ApiController(ILogger<ApiController> lg) 
         {
             logger = lg;
-            fireBase = fb;
         }
 
         [HttpGet]
@@ -28,7 +26,7 @@ namespace APIServer
         [HttpGet]
         public ActionResult<string> CharacterTable()
         {
-            return Ok($"{JsonConvert.SerializeObject(fireBase.DataClient.Characters)}");
+            return Ok($"{JsonConvert.SerializeObject(DataClient.GetInstance().Characters)}");
         }
     }
 }
